@@ -1,0 +1,205 @@
+/* ============================================================================
+   BookiDesk — Design Tokens
+   Marca extraída de la animación del logo ("Pokédex de libros").
+   Estética: biblioteca clásica / academia — vino profundo, dorado y crema.
+
+   Arquitectura en 3 capas:
+     1) PRIMITIVOS  — la paleta cruda de la marca (no usar directo en la UI).
+     2) SEMÁNTICOS  — roles con significado (background, primary…), tema claro/oscuro.
+                      Nombres alineados con shadcn/ui para integración sin retrabajo.
+     3) @theme      — expone los tokens como utilidades de Tailwind v4.
+
+   En producción (Next.js), este contenido se fusiona en `app/globals.css`
+   después de `@import "tailwindcss";` y las fuentes se cargan con `next/font`.
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
+
+/* ============================================================================
+   1) PRIMITIVOS
+   ========================================================================== */
+:root {
+  /* Vino / burdeos — color troncal de la marca */
+  --wine-950: #1d0a0f;
+  --wine-900: #2a1016;
+  --wine-800: #33141c;
+  --wine-700: #4d1322;
+  --wine-600: #722033;
+  --wine-500: #8c2a40; /* derivado — estados hover sobre vino */
+
+  /* Dorado — luz y acento */
+  --gold-600: #a5813a;
+  --gold-500: #d4a94e;
+  --gold-400: #e0bc6a; /* derivado — hover sobre dorado */
+
+  /* Crema / papel — texto sobre oscuro y fondos claros */
+  --cream-100: #f6efe0;
+  --cream-200: #f2e7cf;
+  --cream-300: #ddc9a1;
+
+  /* Azul pizarra — acento secundario, información */
+  --slate-600: #1b2b3c; /* derivado */
+  --slate-500: #23374d;
+  --slate-400: #37506b; /* derivado */
+
+  /* Neutros cálidos */
+  --paper-50:  #f6f4ef;
+  --paper-100: #e9e6df;
+  --paper-200: #dcd8cf;
+  --ink-500:   #6b6458;
+  --ink-950:   #0a0a0a;
+
+  /* Estados (derivados, necesarios para la UI) */
+  --danger-500:  #c0483c;
+  --danger-400:  #e0655a;
+  --success-500: #3e7d5a;
+  --success-400: #5fa37b;
+}
+
+/* ============================================================================
+   2) SEMÁNTICOS — TEMA CLARO ("papel / día")
+   ========================================================================== */
+:root {
+  --radius: 0.625rem;
+
+  /* Tipografía */
+  --font-display: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
+  --font-sans:    'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-mono:    'JetBrains Mono', ui-monospace, monospace;
+
+  --background:            var(--cream-100);
+  --foreground:            var(--wine-900);
+  --card:                  #fffdf8;
+  --card-foreground:       var(--wine-900);
+  --popover:               #fffdf8;
+  --popover-foreground:    var(--wine-900);
+
+  /* En claro manda el VINO como acción principal; el dorado acompaña. */
+  --primary:               var(--wine-600);
+  --primary-foreground:    var(--cream-100);
+  --secondary:             var(--paper-100);
+  --secondary-foreground:  var(--wine-800);
+  --muted:                 var(--paper-100);
+  --muted-foreground:      var(--ink-500);
+  --accent:                var(--gold-500);
+  --accent-foreground:     var(--wine-950);
+
+  --destructive:           var(--danger-500);
+  --destructive-foreground:var(--cream-100);
+
+  --border:                #e7dbc7;
+  --input:                 #e7dbc7;
+  --ring:                  var(--gold-500);
+
+  /* Calificación por estrellas */
+  --star:                  var(--gold-500);
+  --star-empty:            #d9cbb3;
+
+  /* Estados de lectura / préstamo (código visual consistente — PRD CA-4.5) */
+  --status-pending:        var(--slate-500); /* pendiente por leer */
+  --status-reading:        var(--gold-500);  /* leyendo */
+  --status-read:           var(--success-500);/* leído */
+  --status-abandoned:      var(--ink-500);   /* abandonado */
+  --status-loaned:         var(--wine-600);  /* prestado */
+}
+
+/* ============================================================================
+   2) SEMÁNTICOS — TEMA OSCURO ("noche de biblioteca") — el look insignia
+   ========================================================================== */
+.dark {
+  --background:            var(--wine-950);
+  --foreground:            var(--cream-200);
+  --card:                  var(--wine-900);
+  --card-foreground:       var(--cream-200);
+  --popover:               var(--wine-800);
+  --popover-foreground:    var(--cream-200);
+
+  /* En oscuro manda el DORADO como acción principal; el vino es superficie. */
+  --primary:               var(--gold-500);
+  --primary-foreground:    var(--wine-950);
+  --secondary:             var(--wine-700);
+  --secondary-foreground:  var(--cream-200);
+  --muted:                 var(--wine-800);
+  --muted-foreground:      var(--cream-300);
+  --accent:                var(--wine-600);
+  --accent-foreground:     var(--cream-100);
+
+  --destructive:           var(--danger-400);
+  --destructive-foreground:var(--wine-950);
+
+  --border:                rgba(212, 169, 78, 0.14); /* borde dorado sutil */
+  --input:                 rgba(212, 169, 78, 0.18);
+  --ring:                  var(--gold-500);
+
+  --star:                  var(--gold-500);
+  --star-empty:            rgba(242, 231, 207, 0.22);
+
+  --status-pending:        var(--slate-400);
+  --status-reading:        var(--gold-500);
+  --status-read:           var(--success-400);
+  --status-abandoned:      var(--cream-300);
+  --status-loaned:         var(--wine-500);
+}
+
+/* ============================================================================
+   3) @theme — mapea los semánticos a utilidades de Tailwind v4
+   (bg-background, text-foreground, bg-primary, font-display, rounded-lg…)
+   ========================================================================== */
+@theme inline {
+  --color-background:            var(--background);
+  --color-foreground:            var(--foreground);
+  --color-card:                  var(--card);
+  --color-card-foreground:       var(--card-foreground);
+  --color-popover:               var(--popover);
+  --color-popover-foreground:    var(--popover-foreground);
+  --color-primary:               var(--primary);
+  --color-primary-foreground:    var(--primary-foreground);
+  --color-secondary:             var(--secondary);
+  --color-secondary-foreground:  var(--secondary-foreground);
+  --color-muted:                 var(--muted);
+  --color-muted-foreground:      var(--muted-foreground);
+  --color-accent:                var(--accent);
+  --color-accent-foreground:     var(--accent-foreground);
+  --color-destructive:           var(--destructive);
+  --color-destructive-foreground:var(--destructive-foreground);
+  --color-border:                var(--border);
+  --color-input:                 var(--input);
+  --color-ring:                  var(--ring);
+
+  /* Marca cruda expuesta por si se necesita puntualmente */
+  --color-wine:                  var(--wine-600);
+  --color-gold:                  var(--gold-500);
+  --color-cream:                 var(--cream-100);
+  --color-slate-accent:          var(--slate-500);
+
+  /* Estados */
+  --color-status-pending:        var(--status-pending);
+  --color-status-reading:        var(--status-reading);
+  --color-status-read:           var(--status-read);
+  --color-status-abandoned:      var(--status-abandoned);
+  --color-status-loaned:         var(--status-loaned);
+
+  /* Tipografía */
+  --font-display: var(--font-display);
+  --font-sans:    var(--font-sans);
+  --font-mono:    var(--font-mono);
+
+  /* Radios */
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+/* ============================================================================
+   Base — defaults sensatos (fondo, texto y tipografía)
+   ========================================================================== */
+@layer base {
+  * { border-color: var(--border); }
+  body {
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+  }
+  h1, h2, h3, .font-display { font-family: var(--font-display); }
+}
