@@ -3,8 +3,8 @@
 | Campo | Valor |
 |---|---|
 | Producto | BookiDesk — Gestión de la biblioteca del hogar |
-| Versión del documento | 1.0 |
-| Fecha | 12 de julio de 2026 |
+| Versión del documento | 1.1 |
+| Fecha | 14 de julio de 2026 |
 | Propietaria del producto | Laura Salazar |
 | Estado | Aprobado para desarrollo |
 
@@ -39,6 +39,7 @@ Es una aplicación **compartida entre los miembros del hogar**: todos ven y gest
 4. Lista de deseos (libros por comprar) con foto y título, con conversión a biblioteca en un clic.
 5. Registro de préstamos: a quién se prestó cada libro, cuándo, y su historial.
 6. Uso cómodo desde el celular (responsive + instalable como PWA) y desde el computador.
+7. Guardar citas memorables de cada libro, para volver fácilmente a los pasajes favoritos.
 
 ### 2.2 No-objetivos (decisiones explícitas de la propietaria)
 
@@ -91,9 +92,9 @@ Criterios de aceptación:
 - CA-2.1: Vista principal en **cuadrícula de portadas** (la biblioteca se "ve" como biblioteca) con alternativa de vista en lista. La preferencia se recuerda en el dispositivo.
 - CA-2.2: Cada tarjeta muestra: portada, título, autor, estado de lectura (indicador visual) y calificación promedio en estrellas.
 - CA-2.3: Insignia visible de **"Prestado"** sobre la portada cuando el libro tiene un préstamo activo.
-- CA-2.4: Ficha de detalle del libro con: portada grande, título, autor, género, editorial, año, ISBN, sinopsis, etiquetas, estado de lectura, calificación promedio, todas las reseñas (con autor y fecha), estado de préstamo actual e historial de préstamos.
+- CA-2.4: Ficha de detalle del libro con: portada grande, título, autor, género, editorial, año, ISBN, sinopsis, etiquetas, estado de lectura, calificación promedio, todas las reseñas (con autor y fecha), las citas guardadas, estado de préstamo actual e historial de préstamos.
 - CA-2.5: Desde la ficha se puede: cambiar estado de lectura, calificar/reseñar, editar datos, registrar préstamo/devolución, eliminar el libro.
-- CA-2.6: Eliminar un libro pide confirmación explícita y elimina en cascada sus reseñas y préstamos.
+- CA-2.6: Eliminar un libro pide confirmación explícita y elimina en cascada sus reseñas, citas y préstamos.
 - CA-2.7: Campos del libro: título (obligatorio), autor, ISBN, portada, género, editorial, año de publicación, sinopsis, etiquetas libres (múltiples), quién lo agregó y cuándo (automático).
 - CA-2.8: La cuadrícula carga con imágenes optimizadas y scroll fluido con al menos 1.000 libros.
 
@@ -179,6 +180,20 @@ Criterios de aceptación:
 - CA-8.4: Navegación principal con 4 secciones: **Biblioteca** (catálogo), **Lista de deseos**, **Préstamos**, **Recomendar** (vista F5/CA-5.7). En móvil, barra de navegación inferior fija.
 - CA-8.5: Contadores visibles: total de libros, leídos, pendientes (dan la foto general de la biblioteca).
 
+### F9. Citas de libros
+
+**HU-9.1** — Como miembro del hogar, quiero guardar citas textuales de un libro que tengo, para recordar los pasajes que no quiero olvidar.
+
+**HU-9.2** — Como miembro del hogar, quiero ver todas las citas guardadas de un libro al abrir su ficha.
+
+Criterios de aceptación:
+- CA-9.1: Desde la ficha del libro se agregan citas con: texto de la cita (obligatorio, hasta 2.000 caracteres) y número de página (opcional).
+- CA-9.2: Cada cita registra automáticamente quién la agregó y cuándo, y se muestra en la sección "Citas" de la ficha con esa atribución.
+- CA-9.3: Las citas se ordenan por número de página (las que lo tengan) y luego por fecha de creación.
+- CA-9.4: Cualquier miembro puede agregar, editar o eliminar citas — son contenido compartido del hogar (ver §8.4); eliminar pide confirmación.
+- CA-9.5: Una cita puede copiarse al portapapeles con un toque.
+- CA-9.6: Solo los libros de la biblioteca tienen citas (los deseados no); las citas no afectan la calificación ni el estado del libro.
+
 ---
 
 ## 5. Reglas de negocio y operación
@@ -200,6 +215,7 @@ La app es privada para el hogar. Para evitar que terceros creen cuentas:
 | Crear/editar/eliminar libros, deseos y préstamos | Cualquier usuario autenticado |
 | Crear reseña/calificación | Cualquier usuario autenticado (una por libro) |
 | Editar/eliminar reseña | **Solo su autor** |
+| Crear/editar/eliminar citas | Cualquier usuario autenticado |
 | Editar perfil | Solo el dueño del perfil |
 | Sin sesión | Sin acceso a ningún dato |
 
@@ -308,6 +324,11 @@ reviews ────────► books ◄──────── loans
 (reseña+estrellas   (libro único:      (préstamos e
  por usuario)        biblioteca o       historial)
                      deseado)
+                       ▲
+                     N │
+                    quotes
+              (citas memorables,
+               con autor registrado)
 ```
 
 ### 7.2 Esquema SQL (PostgreSQL / Supabase)
@@ -380,11 +401,23 @@ create table loans (
 create unique index one_active_loan_per_book
   on loans (book_id) where returned_at is null;
 
+-- Citas: pasajes memorables por libro (contenido compartido del hogar)
+create table quotes (
+  id          uuid primary key default gen_random_uuid(),
+  book_id     uuid not null references books(id) on delete cascade,
+  quote_text  text not null check (char_length(quote_text) <= 2000),
+  page_number int check (page_number > 0),
+  added_by    uuid references profiles(id) on delete set null,
+  created_at  timestamptz not null default now(),
+  updated_at  timestamptz not null default now()
+);
+
 -- Índices de consulta frecuente
 create index books_status_idx  on books (status, reading_status);
 create index books_title_idx   on books using gin (to_tsvector('spanish', title || ' ' || coalesce(author, '')));
 create index reviews_book_idx  on reviews (book_id);
 create index loans_book_idx    on loans (book_id);
+create index quotes_book_idx   on quotes (book_id);
 ```
 
 ### 7.3 Políticas RLS (resumen)
@@ -395,6 +428,7 @@ create index loans_book_idx    on loans (book_id);
 | `books` | autenticados | autenticados | autenticados | autenticados |
 | `reviews` | autenticados | autenticados (con `user_id = auth.uid()`) | solo autor | solo autor |
 | `loans` | autenticados | autenticados | autenticados | autenticados |
+| `quotes` | autenticados | autenticados | autenticados | autenticados |
 
 Storage: bucket `covers` — lectura para autenticados, escritura para autenticados, tamaño máximo por archivo 2 MB.
 
@@ -423,6 +457,12 @@ Un libro deseado es un registro de `books` con `status = 'wishlist'`. Beneficio 
 ### 8.3 Sin campo de "ranking" adicional
 
 La recomendación se resuelve con la vista "Recomendar" ordenada por promedio de estrellas (CA-5.7). No existe ningún dato de posición manual.
+
+### 8.4 Las citas son contenido compartido (no personal)
+
+**Decisión:** las citas se gestionan como los libros y los préstamos — cualquier miembro puede agregarlas, corregirlas o eliminarlas — con la autoría registrada de forma informativa (quién la guardó y cuándo).
+
+**Razón:** a diferencia de una reseña (opinión personal, editable solo por su autor, §5.2), una cita es un pasaje textual del libro: contenido factual de la colección del hogar. Que cualquiera pueda corregir un error de digitación mantiene la fricción baja, y la atribución conserva el contexto de quién la guardó.
 
 ---
 
@@ -456,8 +496,9 @@ La recomendación se resuelve con la vista "Recomendar" ordenada por promedio de
 - Cuadrícula y lista del catálogo; ficha de detalle; edición y eliminación; detección de duplicados.
 - Estados de lectura con cambio rápido.
 
-### Fase 2 — Opiniones y deseos
+### Fase 2 — Opiniones, citas y deseos
 - Calificación con medias estrellas + reseñas por usuario; promedios; flujo "al marcar Leído".
+- Citas por libro desde la ficha: agregar, editar, eliminar y copiar (F9).
 - Vista "Recomendar".
 - Lista de deseos completa con "¡Ya lo compré!".
 - Búsqueda, filtros, ordenamientos y contadores.
@@ -487,7 +528,17 @@ La recomendación se resuelve con la vista "Recomendar" ordenada por promedio de
 ## 12. Glosario
 
 - **Biblioteca / Catálogo:** conjunto de libros físicos que la casa posee (`status = owned`).
+- **Cita:** pasaje textual de un libro, guardado por un miembro para recordarlo (con página opcional).
 - **Deseado:** libro que se quiere comprar (`status = wishlist`).
 - **Préstamo activo:** préstamo sin fecha de devolución.
 - **PWA:** aplicación web instalable en el teléfono como si fuera una app.
 - **RLS:** reglas de seguridad a nivel de fila en PostgreSQL; garantizan permisos aunque falle la interfaz.
+
+---
+
+## 13. Historial de cambios
+
+| Versión | Fecha | Cambios |
+|---|---|---|
+| 1.0 | 12 de julio de 2026 | Documento inicial aprobado para desarrollo. |
+| 1.1 | 14 de julio de 2026 | Nueva funcionalidad **F9 — Citas de libros**: tabla `quotes`, permisos (§5.2, §7.3), decisión de diseño §8.4 y ajuste de la Fase 2. |
