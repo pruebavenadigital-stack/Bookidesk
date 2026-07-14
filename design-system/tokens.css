@@ -1,6 +1,8 @@
 /* ============================================================================
-   BookiDesk — Design Tokens
-   Marca extraída de la animación del logo ("Pokédex de libros").
+   BookiDesk — Design Tokens · v2
+   FUENTE CANÓNICA: proyecto de Claude Design de Laura
+     https://claude.ai/design/p/b363b449-f8f6-427a-9df9-ba280b27179a
+   Copia local versionada del diseño: design-system/source/ (handoff bundle).
    Estética: biblioteca clásica / academia — vino profundo, dorado y crema.
 
    Arquitectura en 3 capas:
@@ -16,33 +18,35 @@
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
 
 /* ============================================================================
-   1) PRIMITIVOS
+   1) PRIMITIVOS — extraídos del diseño (objeto C de intro-animation.jsx)
    ========================================================================== */
 :root {
-  /* Vino / burdeos — color troncal de la marca */
+  /* Vino / burdeos — color troncal de la marca (pasta y lomo del libro) */
   --wine-950: #1d0a0f;
   --wine-900: #2a1016;
   --wine-800: #33141c;
-  --wine-700: #4d1322;
-  --wine-600: #722033;
-  --wine-500: #8c2a40; /* derivado — estados hover sobre vino */
+  --wine-700: #4d1322;  /* lomo (spine) */
+  --wine-600: #722033;  /* pasta (cover) */
+  --wine-500: #8c2a40;  /* derivado — estados hover sobre vino */
+  --wine-ink: #331016;  /* tinta de trazos del logo (strokes SVG) */
 
-  /* Dorado — luz y acento */
-  --gold-600: #a5813a;
-  --gold-500: #d4a94e;
-  --gold-400: #e0bc6a; /* derivado — hover sobre dorado */
+  /* Dorado — luz y acento (lente, haz de escaneo, "Desk" del wordmark) */
+  --gold-600: #a5813a;  /* dorado texto sobre fondos claros (deskColor light) */
+  --gold-500: #d4a94e;  /* dorado principal */
+  --gold-400: #e0bc6a;  /* derivado — hover sobre dorado */
 
-  /* Crema / papel — texto sobre oscuro y fondos claros */
+  /* Crema / papel — páginas del libro, texto sobre oscuro */
   --cream-100: #f6efe0;
-  --cream-200: #f2e7cf;
-  --cream-300: #ddc9a1;
+  --cream-200: #f2e7cf;  /* páginas */
+  --cream-300: #ddc9a1;  /* líneas de texto sin escanear */
+  --cream-400: #d9c49a;  /* canto de páginas (pageEdge) */
 
-  /* Azul pizarra — acento secundario, información */
-  --slate-600: #1b2b3c; /* derivado */
-  --slate-500: #23374d;
-  --slate-400: #37506b; /* derivado */
+  /* Azul pizarra — la lente del escáner, acento secundario */
+  --slate-600: #1b2b3c;  /* derivado */
+  --slate-500: #23374d;  /* lente */
+  --slate-400: #37506b;  /* derivado */
 
-  /* Neutros cálidos */
+  /* Neutros cálidos (pantallas utilitarias del diseño) */
   --paper-50:  #f6f4ef;
   --paper-100: #e9e6df;
   --paper-200: #dcd8cf;
@@ -54,6 +58,25 @@
   --danger-400:  #e0655a;
   --success-500: #3e7d5a;
   --success-400: #5fa37b;
+}
+
+/* ============================================================================
+   1b) MOVIMIENTO — el carácter de la animación del logo, como tokens
+   (resorte easeOutBack en los "pops", curvas quad para desplazamientos,
+    flotación suave al final; splash total: 3.5 s)
+   ========================================================================== */
+:root {
+  --ease-spring:      cubic-bezier(0.34, 1.56, 0.64, 1);   /* easeOutBack — pops, entradas con resorte */
+  --ease-out-quad:    cubic-bezier(0.25, 0.46, 0.45, 0.94); /* desplazamientos que llegan suave */
+  --ease-in-out-quad: cubic-bezier(0.455, 0.03, 0.515, 0.955); /* transiciones simétricas */
+  --ease-in-cubic:    cubic-bezier(0.55, 0.055, 0.675, 0.19);  /* cierres con golpe */
+
+  --duration-fast: 150ms;   /* micro-feedback (hover, toggles) */
+  --duration-base: 250ms;   /* transiciones de UI estándar */
+  --duration-slow: 400ms;   /* paneles, entradas de tarjetas */
+
+  /* Tagline "TU COLECCIÓN DE LIBROS": mayúsculas con tracking amplio */
+  --tracking-tagline: 0.34em;
 }
 
 /* ============================================================================
@@ -83,6 +106,10 @@
   --muted-foreground:      var(--ink-500);
   --accent:                var(--gold-500);
   --accent-foreground:     var(--wine-950);
+
+  /* Dorado COMO TEXTO sobre este fondo (wordmark "Desk"): versión oscura,
+     tal como hace la animación en fondos claros (deskColor = #a5813a). */
+  --gold-text:             var(--gold-600);
 
   --destructive:           var(--danger-500);
   --destructive-foreground:var(--cream-100);
@@ -124,6 +151,9 @@
   --accent:                var(--wine-600);
   --accent-foreground:     var(--cream-100);
 
+  /* Sobre oscuro el dorado texto es el principal (deskColor = C.gold). */
+  --gold-text:             var(--gold-500);
+
   --destructive:           var(--danger-400);
   --destructive-foreground:var(--wine-950);
 
@@ -143,7 +173,7 @@
 
 /* ============================================================================
    3) @theme — mapea los semánticos a utilidades de Tailwind v4
-   (bg-background, text-foreground, bg-primary, font-display, rounded-lg…)
+   (bg-background, text-gold-text, ease-spring, tracking-tagline…)
    ========================================================================== */
 @theme inline {
   --color-background:            var(--background);
@@ -169,6 +199,7 @@
   /* Marca cruda expuesta por si se necesita puntualmente */
   --color-wine:                  var(--wine-600);
   --color-gold:                  var(--gold-500);
+  --color-gold-text:             var(--gold-text);
   --color-cream:                 var(--cream-100);
   --color-slate-accent:          var(--slate-500);
 
@@ -183,6 +214,12 @@
   --font-display: var(--font-display);
   --font-sans:    var(--font-sans);
   --font-mono:    var(--font-mono);
+
+  /* Movimiento */
+  --ease-spring:      var(--ease-spring);
+  --ease-out-quad:    var(--ease-out-quad);
+  --ease-in-out-quad: var(--ease-in-out-quad);
+  --tracking-tagline: var(--tracking-tagline);
 
   /* Radios */
   --radius-sm: calc(var(--radius) - 4px);
@@ -202,4 +239,8 @@
     font-family: var(--font-sans);
   }
   h1, h2, h3, .font-display { font-family: var(--font-display); }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+  }
 }

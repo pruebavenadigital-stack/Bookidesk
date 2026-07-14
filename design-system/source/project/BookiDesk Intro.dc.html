@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&amp;display=swap" rel="stylesheet">
+<style>
+html, body { margin: 0; height: 100%; background: #1c0b10; }
+a { color: #d4a94e; } a:hover { color: #f2e7cf; }
+</style>
+</helmet>
+<div data-booki-root="" data-screen-label="intro" style="width:100%; height:100vh; background:#1c0b10">
+  <x-import component-from-global-scope="BookiIntro" from="./animations.jsx ./intro-animation.jsx" background="{{ background }}" show-tagline="{{ showTagline }}" loop="{{ loop }}" hint-size="100%,100%"></x-import>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{
+  &quot;background&quot;: { &quot;editor&quot;: &quot;color&quot;, &quot;default&quot;: &quot;#2A1016&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;options&quot;: [&quot;#2A1016&quot;, &quot;#1D0A0F&quot;, &quot;#F6EFE0&quot;], &quot;section&quot;: &quot;Escena&quot; },
+  &quot;showTagline&quot;: { &quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: false, &quot;tsType&quot;: &quot;boolean&quot;, &quot;section&quot;: &quot;Marca&quot; },
+  &quot;loop&quot;: { &quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: true, &quot;tsType&quot;: &quot;boolean&quot;, &quot;section&quot;: &quot;Reproducción&quot; }
+}">
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      background: this.props.background ?? '#2A1016',
+      showTagline: this.props.showTagline ?? false,
+      loop: this.props.loop ?? true,
+    };
+  }
+}
+</script>
+</body>
+</html>
