@@ -1,0 +1,208 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* ============================================================================
+   BookiDesk — tema de marca (derivado del logo / Claude Design)
+   Estructura shadcn/ui + Tailwind v4; valores de marca (vino/dorado/crema).
+   Fuente de verdad: design-system/tokens.css
+   ========================================================================== */
+
+@theme inline {
+  /* Semánticos → utilidades */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  /* Marca cruda + estados de lectura/préstamo + estrellas */
+  --color-wine: var(--wine-600);
+  --color-gold: var(--gold-500);
+  --color-gold-text: var(--gold-text);
+  --color-cream: var(--cream-100);
+  --color-slate-accent: var(--slate-500);
+  --color-star: var(--star);
+  --color-star-empty: var(--star-empty);
+  --color-status-pending: var(--status-pending);
+  --color-status-reading: var(--status-reading);
+  --color-status-read: var(--status-read);
+  --color-status-abandoned: var(--status-abandoned);
+  --color-status-loaned: var(--status-loaned);
+
+  /* Sidebar / charts (tinte de marca) */
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+
+  /* Tipografía */
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+  --font-display: var(--font-display);
+  --font-heading: var(--font-display);
+
+  /* Movimiento (del carácter de la animación del logo) */
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-out-quad: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --ease-in-out-quad: cubic-bezier(0.455, 0.03, 0.515, 0.955);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+:root {
+  /* -- Primitivos de marca -- */
+  --wine-950: #1d0a0f;  --wine-900: #2a1016;  --wine-800: #33141c;
+  --wine-700: #4d1322;  --wine-600: #722033;  --wine-500: #8c2a40;
+  --gold-600: #a5813a;  --gold-500: #d4a94e;  --gold-400: #e0bc6a;
+  --cream-100: #f6efe0; --cream-200: #f2e7cf; --cream-300: #ddc9a1;
+  --slate-500: #23374d; --slate-400: #37506b;
+  --paper-100: #e9e6df; --ink-500: #6b6458;
+  --danger-500: #c0483c; --danger-400: #e0655a;
+  --success-500: #3e7d5a; --success-400: #5fa37b;
+
+  /* -- Tipografía (variables provistas por next/font) -- */
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, monospace;
+  --font-display: var(--font-space-grotesk), ui-sans-serif, system-ui, sans-serif;
+
+  --radius: 0.625rem;
+
+  /* -- Semánticos: TEMA CLARO ("papel / día") -- */
+  --background: var(--cream-100);
+  --foreground: var(--wine-900);
+  --card: #fffdf8;
+  --card-foreground: var(--wine-900);
+  --popover: #fffdf8;
+  --popover-foreground: var(--wine-900);
+  --primary: var(--wine-600);
+  --primary-foreground: var(--cream-100);
+  --secondary: var(--paper-100);
+  --secondary-foreground: var(--wine-800);
+  --muted: var(--paper-100);
+  --muted-foreground: var(--ink-500);
+  --accent: var(--gold-500);
+  --accent-foreground: var(--wine-950);
+  --destructive: var(--danger-500);
+  --destructive-foreground: var(--cream-100);
+  --border: #e7dbc7;
+  --input: #e7dbc7;
+  --ring: var(--gold-500);
+
+  --gold-text: var(--gold-600);
+  --star: var(--gold-500);
+  --star-empty: #d9cbb3;
+  --status-pending: var(--slate-500);
+  --status-reading: var(--gold-500);
+  --status-read: var(--success-500);
+  --status-abandoned: var(--ink-500);
+  --status-loaned: var(--wine-600);
+
+  /* Sidebar / charts en clave de marca */
+  --sidebar: #fffdf8;
+  --sidebar-foreground: var(--wine-900);
+  --sidebar-primary: var(--wine-600);
+  --sidebar-primary-foreground: var(--cream-100);
+  --sidebar-accent: var(--paper-100);
+  --sidebar-accent-foreground: var(--wine-800);
+  --sidebar-border: #e7dbc7;
+  --sidebar-ring: var(--gold-500);
+  --chart-1: var(--gold-500);
+  --chart-2: var(--wine-600);
+  --chart-3: var(--slate-500);
+  --chart-4: var(--success-500);
+  --chart-5: var(--gold-600);
+}
+
+.dark {
+  /* -- Semánticos: TEMA OSCURO ("noche de biblioteca") -- */
+  --background: var(--wine-950);
+  --foreground: var(--cream-200);
+  --card: var(--wine-900);
+  --card-foreground: var(--cream-200);
+  --popover: var(--wine-800);
+  --popover-foreground: var(--cream-200);
+  --primary: var(--gold-500);
+  --primary-foreground: var(--wine-950);
+  --secondary: var(--wine-700);
+  --secondary-foreground: var(--cream-200);
+  --muted: var(--wine-800);
+  --muted-foreground: var(--cream-300);
+  --accent: var(--wine-600);
+  --accent-foreground: var(--cream-100);
+  --destructive: var(--danger-400);
+  --destructive-foreground: var(--wine-950);
+  --border: color-mix(in srgb, var(--gold-500) 14%, transparent);
+  --input: color-mix(in srgb, var(--gold-500) 18%, transparent);
+  --ring: var(--gold-500);
+
+  --gold-text: var(--gold-500);
+  --star: var(--gold-500);
+  --star-empty: color-mix(in srgb, var(--cream-200) 22%, transparent);
+  --status-pending: var(--slate-400);
+  --status-reading: var(--gold-500);
+  --status-read: var(--success-400);
+  --status-abandoned: var(--cream-300);
+  --status-loaned: var(--wine-500);
+
+  --sidebar: var(--wine-900);
+  --sidebar-foreground: var(--cream-200);
+  --sidebar-primary: var(--gold-500);
+  --sidebar-primary-foreground: var(--wine-950);
+  --sidebar-accent: var(--wine-700);
+  --sidebar-accent-foreground: var(--cream-200);
+  --sidebar-border: color-mix(in srgb, var(--gold-500) 14%, transparent);
+  --sidebar-ring: var(--gold-500);
+  --chart-1: var(--gold-500);
+  --chart-2: var(--wine-500);
+  --chart-3: var(--slate-400);
+  --chart-4: var(--success-400);
+  --chart-5: var(--cream-300);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-sans);
+  }
+  h1, h2, h3, .font-display {
+    font-family: var(--font-display);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.001ms !important;
+      transition-duration: 0.001ms !important;
+    }
+  }
+}
