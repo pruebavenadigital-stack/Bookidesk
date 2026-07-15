@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { PageHeader, ComingSoon } from "@/components/page-header";
+import { PageHeader } from "@/components/page-header";
+import { AddBookFlow } from "@/components/add/add-book-flow";
 
 export const metadata: Metadata = { title: "Agregar libro — BookiDesk" };
 
@@ -10,7 +11,7 @@ export default function AgregarPage() {
         title="Agregar libro"
         description="Busca por título, autor o ISBN — o escanea el código de barras."
       />
-      <ComingSoon note="Aquí vivirá el alta asistida por Google Books + escáner (Fase 1)." />
+      <AddBookFlow />
     </div>
   );
 }
