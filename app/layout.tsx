@@ -4,6 +4,7 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/sonner";
+import { PwaRegister } from "@/components/pwa-register";
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
@@ -50,6 +51,7 @@ export default function RootLayout({
           <TooltipProvider delayDuration={200}>
             {children}
             <Toaster richColors position="top-center" />
+            <PwaRegister />
           </TooltipProvider>
         </ThemeProvider>
       </body>

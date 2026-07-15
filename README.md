@@ -26,6 +26,7 @@ Es una aplicación **multiusuario con base de datos compartida**: no hay bibliot
 
 - [`MEMORY.md`](./MEMORY.md) — **empieza aquí**: el mapa del proyecto, las decisiones y sus porqués, y los gotchas del stack. Se carga solo en cada sesión de Claude Code.
 - [`PRD.md`](./PRD.md) — requisitos completos: funcionalidades (F1–F9), modelo de datos y decisiones de diseño.
+- [`DEPLOY.md`](./DEPLOY.md) — checklist para publicar la app y usarla desde el celular.
 - [`design-system/`](./design-system/) — tokens de marca y el diseño original del logo.
 
 ## Desarrollo
@@ -40,5 +41,8 @@ Las variables de entorno van en `.env.local` (ver [`.env.example`](./.env.exampl
 
 ## Estado
 
-En desarrollo. **Fases 0, 1 y 2 completas** (fundaciones, catálogo y alta de libros,
-reseñas/citas/deseos). Falta la **Fase 3**: préstamos, PWA, exportar CSV y despliegue.
+**Las 9 funcionalidades del PRD (F1–F9) están implementadas y verificadas**: autenticación,
+catálogo, alta asistida por Google Books + escáner, estados de lectura, reseñas, citas,
+lista de deseos, préstamos, búsqueda/filtros, PWA instalable y exportación a CSV.
+
+Falta **desplegar** para poder usarla desde el celular — ver [`DEPLOY.md`](./DEPLOY.md).

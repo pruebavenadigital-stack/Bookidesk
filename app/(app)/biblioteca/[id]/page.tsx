@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
-import { getBookDetail } from "@/lib/books/queries";
+import { getBookDetail, getBorrowerNames } from "@/lib/books/queries";
 import { createClient } from "@/lib/supabase/server";
 import { ReviewsSection } from "@/components/book/reviews-section";
 import { QuotesSection } from "@/components/book/quotes-section";
+import { LoansSection } from "@/components/book/loans-section";
 import { Synopsis } from "@/components/book/synopsis";
 import { BookCover } from "@/components/book/book-cover";
 import { StarRatingDisplay } from "@/components/book/star-rating-display";
@@ -24,9 +25,11 @@ export default async function BookDetailPage({
   if (!book) notFound();
 
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const [{ data: userData }, borrowerNames] = await Promise.all([
+    supabase.auth.getUser(),
+    getBorrowerNames(),
+  ]);
+  const user = userData.user;
 
   const ratings = book.reviews
     .map((r) => r.rating)
@@ -141,6 +144,11 @@ export default async function BookDetailPage({
       {/* Reseñas y citas: solo para libros de la biblioteca (CA-6.5, CA-9.6) */}
       {book.status === "owned" && user ? (
         <>
+          <LoansSection
+            bookId={book.id}
+            loans={book.loans}
+            borrowerNames={borrowerNames}
+          />
           <ReviewsSection
             bookId={book.id}
             reviews={book.reviews}

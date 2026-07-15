@@ -22,7 +22,10 @@ biblioteca; lo personal son las reseñas (firmadas por su autor). Interfaz **100
 | 0 — Fundaciones | ✅ | Scaffold, marca, Supabase, auth (F1), navegación (F8), intro animada |
 | 1 — Catálogo y alta | ✅ | Alta con Google Books + escáner, portadas, catálogo (F2), ficha, estados (F4) |
 | 2 — Opiniones y deseos | ✅ | Reseñas (F5), citas (F9), deseos (F6), Recomendar, búsqueda/filtros (F8) |
-| 3 — Préstamos y cierre | ⬜ **Pendiente** | Préstamos (F7), PWA, exportar CSV, despliegue en Vercel |
+| 3 — Préstamos y cierre | ✅ | Préstamos (F7), PWA instalable, exportar CSV |
+
+**Las 9 funcionalidades del PRD (F1–F9) están implementadas y verificadas.**
+Falta solo **desplegar**: ver [`DEPLOY.md`](./DEPLOY.md) (requiere la cuenta de Vercel de Laura).
 
 ## ⚠️ Stack real: Next.js **16** (no 15)
 

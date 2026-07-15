@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { LogOut, UserCog, Moon, Sun } from "lucide-react";
+import { LogOut, UserCog, Moon, Sun, Download } from "lucide-react";
 import { useTheme } from "next-themes";
 import { signOut } from "@/lib/actions/auth";
 import {
@@ -58,6 +58,12 @@ export function UserMenu({
             <UserCog className="mr-2 h-4 w-4" />
             Editar perfil
           </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <a href="/api/export" download>
+            <Download className="mr-2 h-4 w-4" />
+            Exportar biblioteca (CSV)
+          </a>
         </DropdownMenuItem>
         <DropdownMenuItem
           onSelect={(e) => {

@@ -132,6 +132,56 @@ export async function getBookDetail(id: string): Promise<BookDetail | null> {
   return detail;
 }
 
+export type ActiveLoan = {
+  id: string;
+  borrower_name: string;
+  loaned_at: string;
+  notes: string | null;
+  book: {
+    id: string;
+    title: string;
+    author: string | null;
+    cover_url: string | null;
+  };
+};
+
+/** Préstamos activos (sin devolver), del más antiguo al más reciente. */
+export async function getActiveLoans(): Promise<ActiveLoan[]> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("loans")
+    .select("id, borrower_name, loaned_at, notes, books(id, title, author, cover_url)")
+    .is("returned_at", null)
+    .order("loaned_at", { ascending: true });
+
+  return (data ?? [])
+    .filter((r) => r.books)
+    .map((r) => ({
+      id: r.id,
+      borrower_name: r.borrower_name,
+      loaned_at: r.loaned_at,
+      notes: r.notes,
+      book: r.books as unknown as ActiveLoan["book"],
+    }));
+}
+
+/** Nombres de prestatarios ya usados, para autocompletar (CA-7.7). */
+export async function getBorrowerNames(): Promise<string[]> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("loans")
+    .select("borrower_name")
+    .order("loaned_at", { ascending: false })
+    .limit(200);
+  return Array.from(new Set((data ?? []).map((r) => r.borrower_name)));
+}
+
+/** Días transcurridos desde una fecha (dato informativo, sin alertas). */
+export function daysSince(dateISO: string): number {
+  const ms = Date.now() - new Date(dateISO + "T00:00:00").getTime();
+  return Math.max(0, Math.floor(ms / 86_400_000));
+}
+
 /** Detección de duplicados: por ISBN, o por título+autor si no hay ISBN. */
 export async function findDuplicate(
   isbn: string | null,
