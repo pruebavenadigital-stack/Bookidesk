@@ -11,6 +11,7 @@ function csvEscape(value: unknown): string {
 
 type ReviewRow = { rating: number | null };
 type LoanRow = { borrower_name: string; returned_at: string | null };
+type StatusRow = { status: string };
 
 /**
  * Exporta toda la biblioteca (y los deseos) a CSV — respaldo de los datos del hogar.
@@ -25,7 +26,10 @@ export async function GET() {
 
   const { data, error } = await supabase
     .from("books")
-    .select("*, reviews(rating), loans(borrower_name, returned_at)")
+    .select(
+      "*, reviews(rating), loans(borrower_name, returned_at), reading_statuses(status)",
+    )
+    .eq("reading_statuses.user_id", user.id)
     .order("title", { ascending: true });
 
   if (error) {
@@ -37,7 +41,7 @@ export async function GET() {
     "Autor",
     "ISBN",
     "Dónde está",
-    "Estado de lectura",
+    "Mi estado de lectura",
     "Género",
     "Editorial",
     "Año",
@@ -61,14 +65,16 @@ export async function GET() {
     const active = ((b.loans ?? []) as LoanRow[]).find(
       (l) => l.returned_at === null,
     );
+    // Mi estado (embed filtrado al usuario que exporta); sin fila = pendiente.
+    const myStatus = ((b.reading_statuses ?? []) as StatusRow[])[0]?.status;
 
     return [
       b.title,
       b.author,
       b.isbn,
       b.status === "wishlist" ? "Lista de deseos" : "En la biblioteca",
-      b.reading_status
-        ? READING_STATUS_LABEL[b.reading_status as ReadingStatus]
+      b.status === "owned"
+        ? READING_STATUS_LABEL[(myStatus as ReadingStatus) ?? "pendiente"]
         : "",
       b.genre,
       b.publisher,

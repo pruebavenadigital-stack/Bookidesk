@@ -52,3 +52,4 @@ supabase/.temp
 .vscode/*
 !.vscode/extensions.json
 *.swp
+.env*

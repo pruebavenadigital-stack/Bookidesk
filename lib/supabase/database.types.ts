@@ -23,7 +23,6 @@ export type Database = {
           isbn: string | null;
           published_year: number | null;
           publisher: string | null;
-          reading_status: string | null;
           status: string;
           synopsis: string | null;
           tags: string[];
@@ -41,7 +40,6 @@ export type Database = {
           isbn?: string | null;
           published_year?: number | null;
           publisher?: string | null;
-          reading_status?: string | null;
           status?: string;
           synopsis?: string | null;
           tags?: string[];
@@ -59,7 +57,6 @@ export type Database = {
           isbn?: string | null;
           published_year?: number | null;
           publisher?: string | null;
-          reading_status?: string | null;
           status?: string;
           synopsis?: string | null;
           tags?: string[];
@@ -184,6 +181,42 @@ export type Database = {
             columns: ["book_id"];
             isOneToOne: false;
             referencedRelation: "books";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      reading_statuses: {
+        Row: {
+          book_id: string;
+          status: string;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          book_id: string;
+          status: string;
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          book_id?: string;
+          status?: string;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "reading_statuses_book_id_fkey";
+            columns: ["book_id"];
+            isOneToOne: false;
+            referencedRelation: "books";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "reading_statuses_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
             referencedColumns: ["id"];
           },
         ];

@@ -24,8 +24,15 @@ biblioteca; lo personal son las reseñas (firmadas por su autor). Interfaz **100
 | 2 — Opiniones y deseos | ✅ | Reseñas (F5), citas (F9), deseos (F6), Recomendar, búsqueda/filtros (F8) |
 | 3 — Préstamos y cierre | ✅ | Préstamos (F7), PWA instalable, exportar CSV |
 
-**Las 9 funcionalidades del PRD (F1–F9) están implementadas y verificadas.**
-Falta solo **desplegar**: ver [`DEPLOY.md`](./DEPLOY.md) (requiere la cuenta de Vercel de Laura).
+**Las 9 funcionalidades del PRD (F1–F9) están implementadas, verificadas y EN PRODUCCIÓN:**
+**https://bookidesk.venadigital.com.co** (Vercel, proyecto `bookidesk`; deploy manual con
+`npx vercel --prod` — GitHub NO está conectado a Vercel por el tema de cuentas, ver §Repo).
+DNS: ALIAS `bookidesk` → `cname.vercel-dns.com` en Hostinger (venía apuntando al CDN de
+Hostinger y hubo que repuntarlo; NO tocar los registros del dominio raíz).
+
+**v1.2 (2026-07-15): estado de lectura POR MIEMBRO.** `books.reading_status` ya no existe;
+ahora es la tabla `reading_statuses` (pk libro+usuario, sin fila = pendiente, RLS personal).
+Cada quien ve SOLO su estado (decisión de Laura). Las marcas históricas se migraron a Laura.
 
 ## ⚠️ Stack real: Next.js **16** (no 15)
 
@@ -72,10 +79,13 @@ supabase/migrations/   SQL versionado (espejo de lo aplicado en la nube)
 ## Base de datos (Supabase)
 
 - Proyecto: **`lpjvsdytgfunfactsxwd`** (org propia, separada de VenaDigital). PostgreSQL 17.
-- Tablas: `profiles`, `books`, `reviews`, `loans`, `quotes` — **todas con RLS**.
+- Tablas: `profiles`, `books`, `reviews`, `loans`, `quotes`, `reading_statuses` — **todas con RLS**.
 - **`books` es un solo modelo** para biblioteca y deseos: `status = 'owned' | 'wishlist'`
   (§8.2 del PRD). Por eso "¡Ya lo compré!" es solo un cambio de estado que conserva los datos.
-- `reading_status` (pendiente/leyendo/leido/abandonado) es **único por libro**, no por usuario (§8.1).
+- **Estado de lectura POR MIEMBRO** (§8.1 v1.2): tabla `reading_statuses` (pk `book_id,user_id`,
+  `status` pendiente/leyendo/leido/abandonado). **Sin fila = pendiente.** RLS personal (como
+  reviews): cada quien inserta/edita/borra solo la suya. En la app: `BookWithMeta.myStatus`
+  (embed filtrado por `user_id` en `lib/books/queries.ts`); contadores/filtros/CSV personales.
 - Reseñas: **una por usuario por libro** (`unique(book_id,user_id)`), editable solo por su autor.
 - Citas: **contenido compartido** — cualquiera edita/borra, con autoría informativa (§8.4).
 - Préstamo activo = `loans.returned_at IS NULL` (hay índice único: 1 activo por libro).
@@ -123,10 +133,11 @@ npm run dev      # o preview_start con el nombre "bookidesk" (.claude/launch.jso
 npm run build    # verificación rápida de tipos + rutas: correrlo antes de cerrar cada fase
 ```
 
-- Existe un **usuario de prueba desechable** (`test@bookidesk.local`) creado por SQL para verificar.
-  **Borrarlo antes de producción.** Para crear otro (sin registro público), vía SQL en Supabase:
+- **Cuentas reales activas: solo Laura y Daniela** (los usuarios de prueba ya fueron borrados).
+  Para verificar sin tocar sus cuentas: crear un usuario desechable vía SQL en Supabase —
   inserta en `auth.users` con `extensions.crypt('CLAVE_TEMPORAL', extensions.gen_salt('bf'))`
-  + la fila correspondiente en `auth.identities`.
+  + la fila correspondiente en `auth.identities` — y **borrarlo al terminar** (sus marcas y
+  reseñas se van en cascada). OJO: el dev local usa la MISMA base de producción.
 - **Gotcha de automation:** el navegador automatizado **no dispara submits de formularios React**
   con clic → usar `form.requestSubmit()`. Los clics en botones y opciones normales sí funcionan.
   El `read_page` justo tras `navigate` a veces da "empty/0x0": un screenshot lo despierta.
@@ -143,10 +154,14 @@ Decisiones explícitas de Laura (PRD §2.2). No "mejorar" agregándolas:
 
 ## Pendiente de Laura (no lo puede hacer el agente)
 
-- **Cuentas reales del hogar**: se crean a mano en el panel de Supabase (sin registro público, §5.1).
+- ~~Cuentas reales~~ ✅ creadas (laura@venadigital.com.co y danielapdunoyer@gmail.com).
+- ~~Vercel~~ ✅ desplegado (proyecto `bookidesk`, variables cargadas, dominio conectado).
 - **SMTP en Supabase** para los correos de recuperación (el default tiene límites).
-- **Vercel** (Fase 3): su cuenta + conectar el repo; las variables de entorno se configuran juntos.
+- **Site URL / Redirect URLs** en Supabase Auth (URL Configuration): confirmar que apuntan a
+  `https://bookidesk.venadigital.com.co` (+ `/auth/confirm`) — sin esto no sirve el correo de recuperación.
 - Confirmar que el **registro público está deshabilitado** en Supabase Auth.
+- Opcional: conectar GitHub↔Vercel para auto-deploy (hoy falla porque la cuenta de Vercel no ve
+  el repo de `pruebavenadigital-stack`; mientras tanto, deploy manual con `npx vercel --prod`).
 
 ## Repo
 

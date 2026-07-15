@@ -3,8 +3,8 @@
 | Campo | Valor |
 |---|---|
 | Producto | BookiDesk — Gestión de la biblioteca del hogar |
-| Versión del documento | 1.1 |
-| Fecha | 14 de julio de 2026 |
+| Versión del documento | 1.2 |
+| Fecha | 15 de julio de 2026 |
 | Propietaria del producto | Laura Salazar |
 | Estado | Aprobado para desarrollo |
 
@@ -34,7 +34,7 @@ Es una aplicación **compartida entre los miembros del hogar**: todos ven y gest
 ### 2.1 Objetivos
 
 1. Inventario completo y compartido de los libros del hogar, con portada, autor y datos básicos.
-2. Clasificación por estado de lectura: pendiente, leyendo, leído, abandonado.
+2. Clasificación por estado de lectura **de cada miembro** (pendiente, leyendo, leído, abandonado): cada quien lleva su propia marca sobre la misma biblioteca.
 3. Calificación con estrellas y reseña personal por cada miembro del hogar, para apoyar recomendaciones.
 4. Lista de deseos (libros por comprar) con foto y título, con conversión a biblioteca en un clic.
 5. Registro de préstamos: a quién se prestó cada libro, cuándo, y su historial.
@@ -116,11 +116,11 @@ Criterios de aceptación:
 
 ### F4. Estados de lectura
 
-**HU-4.1** — Como miembro del hogar, quiero clasificar cada libro según si está pendiente, en lectura, leído o abandonado, para saber qué nos falta por leer.
+**HU-4.1** — Como miembro del hogar, quiero clasificar cada libro según si para MÍ está pendiente, en lectura, leído o abandonado, para saber qué me falta por leer — aunque otro miembro tenga el mismo libro en otro estado.
 
 Criterios de aceptación:
 - CA-4.1: Estados posibles (aplican solo a libros de la biblioteca, no a deseados): `Pendiente por leer` · `Leyendo` · `Leído` · `Abandonado`.
-- CA-4.2: El estado es **único por libro** (refleja la situación del ejemplar en la casa) y cualquier miembro puede cambiarlo. Ver decisión de diseño en §8.1.
+- CA-4.2: El estado es **personal por miembro**: cada usuario marca y ve **solo su propio estado** en catálogo, ficha, contadores y filtros. Un libro sin marca propia se muestra `Pendiente por leer`. Ver decisión de diseño en §8.1 (v1.2).
 - CA-4.3: Cambio de estado en un solo toque desde la tarjeta o la ficha del libro.
 - CA-4.4: Al marcar un libro como **Leído**, la app abre inmediatamente el paso de calificación y reseña (F5). Este paso puede omitirse y completarse después.
 - CA-4.5: El estado se refleja con un código visual consistente en toda la app (color/insignia por estado).
@@ -216,6 +216,7 @@ La app es privada para el hogar. Para evitar que terceros creen cuentas:
 | Crear reseña/calificación | Cualquier usuario autenticado (una por libro) |
 | Editar/eliminar reseña | **Solo su autor** |
 | Crear/editar/eliminar citas | Cualquier usuario autenticado |
+| Estado de lectura | **Personal**: cada miembro marca y ve solo el suyo |
 | Editar perfil | Solo el dueño del perfil |
 | Sin sesión | Sin acceso a ningún dato |
 
@@ -232,8 +233,8 @@ Estas reglas se implementan en la base de datos con **Row Level Security (RLS)**
    ┌─────────────────────────────────────────────┐
    │                 En biblioteca               │
    │                                             │
-   │  Pendiente ⇄ Leyendo ⇄ Leído ⇄ Abandonado   │   (estado de lectura,
-   │                                             │    libre entre estados)
+   │  Pendiente ⇄ Leyendo ⇄ Leído ⇄ Abandonado   │   (estado de lectura DE CADA
+   │                                             │    MIEMBRO, libre entre estados)
    │  + Prestado / Disponible (independiente,    │
    │    derivado del préstamo activo)            │
    └─────────────────────────────────────────────┘
@@ -324,11 +325,12 @@ reviews ────────► books ◄──────── loans
 (reseña+estrellas   (libro único:      (préstamos e
  por usuario)        biblioteca o       historial)
                      deseado)
-                       ▲
-                     N │
-                    quotes
-              (citas memorables,
-               con autor registrado)
+                       ▲ ▲
+                     N │ │ N
+                quotes   reading_statuses
+        (citas memorables,   (estado de lectura
+         con autor            POR MIEMBRO; sin fila
+         registrado)          = pendiente)
 ```
 
 ### 7.2 Esquema SQL (PostgreSQL / Supabase)
@@ -356,18 +358,20 @@ create table books (
   tags           text[] not null default '{}',
   status         text not null default 'owned'
                  check (status in ('owned', 'wishlist')),
-  reading_status text
-                 check (reading_status in
-                        ('pendiente', 'leyendo', 'leido', 'abandonado')),
   wishlist_note  text,              -- dónde lo vi / precio / quién lo recomendó
   added_by       uuid references profiles(id) on delete set null,
   created_at     timestamptz not null default now(),
-  updated_at     timestamptz not null default now(),
-  -- un deseado no tiene estado de lectura; un libro en biblioteca sí
-  constraint reading_status_matches_status check (
-    (status = 'wishlist' and reading_status is null) or
-    (status = 'owned'    and reading_status is not null)
-  )
+  updated_at     timestamptz not null default now()
+);
+
+-- Estado de lectura POR MIEMBRO (v1.2): modelo disperso, sin fila = 'pendiente'
+create table reading_statuses (
+  book_id    uuid not null references books(id) on delete cascade,
+  user_id    uuid not null references profiles(id) on delete cascade,
+  status     text not null
+             check (status in ('pendiente', 'leyendo', 'leido', 'abandonado')),
+  updated_at timestamptz not null default now(),
+  primary key (book_id, user_id)
 );
 
 -- Reseñas y calificaciones: una por usuario por libro
@@ -413,7 +417,8 @@ create table quotes (
 );
 
 -- Índices de consulta frecuente
-create index books_status_idx  on books (status, reading_status);
+create index books_status_idx  on books (status);
+create index reading_statuses_user_idx on reading_statuses (user_id);
 create index books_title_idx   on books using gin (to_tsvector('spanish', title || ' ' || coalesce(author, '')));
 create index reviews_book_idx  on reviews (book_id);
 create index loans_book_idx    on loans (book_id);
@@ -429,6 +434,7 @@ create index quotes_book_idx   on quotes (book_id);
 | `reviews` | autenticados | autenticados (con `user_id = auth.uid()`) | solo autor | solo autor |
 | `loans` | autenticados | autenticados | autenticados | autenticados |
 | `quotes` | autenticados | autenticados | autenticados | autenticados |
+| `reading_statuses` | autenticados | solo el propio (`user_id = auth.uid()`) | solo el propio | solo el propio |
 
 Storage: bucket `covers` — lectura para autenticados, escritura para autenticados, tamaño máximo por archivo 2 MB.
 
@@ -436,19 +442,22 @@ Storage: bucket `covers` — lectura para autenticados, escritura para autentica
 
 - **Calificación promedio del libro** = promedio de `reviews.rating` (calculado en consulta o vista).
 - **Libro prestado** = existe `loan` con `returned_at IS NULL`.
-- **Contadores del tablero** (total, leídos, pendientes) = agregaciones sobre `books`.
+- **Estado de lectura mostrado** = fila del usuario actual en `reading_statuses`; sin fila = `pendiente`.
+- **Contadores del tablero** (total, leídos, pendientes) = total sobre `books`; leídos/leyendo/pendientes **del usuario actual**.
 
 ---
 
 ## 8. Decisiones de diseño documentadas
 
-### 8.1 Estado de lectura único por libro (no por usuario)
+### 8.1 Estado de lectura por miembro (decisión evolucionada en v1.2)
 
-**Decisión:** el estado de lectura (`pendiente/leyendo/leido/abandonado`) es una propiedad del libro, compartida por el hogar; cualquier miembro lo cambia.
+**Decisión (v1.2):** el estado de lectura (`pendiente/leyendo/leido/abandonado`) es **personal por miembro**: tabla `reading_statuses` (una fila por libro+usuario; sin fila = pendiente). Cada quien marca y ve **solo su propio estado** — en catálogo, ficha, contadores, filtros y exportación. Lo compartido del libro sigue siendo todo lo demás (datos, reseñas visibles, citas, préstamos).
 
-**Razón:** mantiene la app simple y coincide con el modelo mental de "control de los libros de la casa". La dimensión individual (que dos personas opinen distinto del mismo libro) se cubre con las **reseñas y calificaciones por usuario** (F5), que es donde la opinión personal realmente importa.
+**Por qué evolucionó:** la v1.0 definió el estado como único por libro para mantener la app simple, anticipando que podría evolucionar. Al cargar la biblioteca real quedó claro el caso concreto: Laura ya leyó libros que Daniela no, y una sola marca compartida obligaría a pisarse mutuamente. La migración asignó las marcas existentes a Laura (ella las hizo todas) y Daniela partió de cero.
 
-**Alternativa descartada:** estado de lectura por usuario. Se descartó por duplicar la complejidad de interfaz y base de datos con poco beneficio para el caso de uso doméstico. Si más adelante se necesitara, la tabla `reviews` ya identifica quién leyó qué, y se podría evolucionar.
+**Decisión de visibilidad:** Laura eligió que cada quien vea **únicamente lo suyo** (sin mostrar el estado de los demás en la ficha). La señal compartida sobre un libro siguen siendo las reseñas y calificaciones (F5).
+
+**Nota histórica (v1.0, reemplazada):** "estado único por libro; la dimensión individual se cubre con reseñas por usuario". Se conserva aquí como contexto de por qué el modelo cambió.
 
 ### 8.2 La lista de deseos comparte el modelo de datos del catálogo
 
@@ -542,3 +551,4 @@ La recomendación se resuelve con la vista "Recomendar" ordenada por promedio de
 |---|---|---|
 | 1.0 | 12 de julio de 2026 | Documento inicial aprobado para desarrollo. |
 | 1.1 | 14 de julio de 2026 | Nueva funcionalidad **F9 — Citas de libros**: tabla `quotes`, permisos (§5.2, §7.3), decisión de diseño §8.4 y ajuste de la Fase 2. |
+| 1.2 | 15 de julio de 2026 | **Estado de lectura por miembro** (evolución de §8.1): tabla `reading_statuses` (sin fila = pendiente, RLS personal), se elimina `books.reading_status`, contadores/filtros/exportación personales (F4, §5.2, §7). Migración: las marcas existentes se asignaron a Laura. |

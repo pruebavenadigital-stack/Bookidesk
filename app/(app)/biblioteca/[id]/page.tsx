@@ -13,7 +13,6 @@ import { ReadingStatusControl } from "@/components/book/reading-status-control";
 import { EditBookDialog } from "@/components/book/edit-book-dialog";
 import { DeleteBookButton } from "@/components/book/delete-book-button";
 import { LoanedBadge } from "@/components/book/status-badge";
-import type { ReadingStatus } from "@/lib/supabase/types";
 
 export default async function BookDetailPage({
   params,
@@ -68,11 +67,8 @@ export default async function BookDetailPage({
             />
             {activeLoan ? <LoanedBadge className="absolute left-2 top-2" /> : null}
           </div>
-          {book.status === "owned" && book.reading_status ? (
-            <ReadingStatusControl
-              bookId={book.id}
-              status={book.reading_status as ReadingStatus}
-            />
+          {book.status === "owned" ? (
+            <ReadingStatusControl bookId={book.id} status={book.myStatus} />
           ) : null}
         </div>
 

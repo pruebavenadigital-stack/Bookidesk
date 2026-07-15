@@ -66,7 +66,7 @@ export function LibraryView({ books }: { books: BookWithMeta[] }) {
         (b) => norm(b.title).includes(needle) || norm(b.author ?? "").includes(needle),
       );
     }
-    if (status !== ALL) list = list.filter((b) => b.reading_status === status);
+    if (status !== ALL) list = list.filter((b) => b.myStatus === status);
     if (genre !== ALL) list = list.filter((b) => b.genre === genre);
     if (tag !== ALL) list = list.filter((b) => b.tags.includes(tag));
     if (minRating !== ALL)

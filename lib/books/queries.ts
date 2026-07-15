@@ -1,41 +1,60 @@
 import { createClient } from "@/lib/supabase/server";
-import type { Book } from "@/lib/supabase/types";
+import type { Book, ReadingStatus } from "@/lib/supabase/types";
 
 export type BookWithMeta = Book & {
   avgRating: number | null;
   ratingCount: number;
   activeLoan: { borrower_name: string } | null;
+  /** Estado de lectura DEL USUARIO ACTUAL (sin fila = pendiente). */
+  myStatus: ReadingStatus;
 };
 
 type ReviewRow = { rating: number | null };
 type LoanRow = { borrower_name: string; returned_at: string | null };
+type StatusRow = { status: string };
 
 function enrich(
-  row: Book & { reviews?: ReviewRow[]; loans?: LoanRow[] },
+  row: Book & {
+    reviews?: ReviewRow[];
+    loans?: LoanRow[];
+    reading_statuses?: StatusRow[];
+  },
 ): BookWithMeta {
-  const ratings = (row.reviews ?? [])
+  const { reviews, loans, reading_statuses, ...book } = row;
+  const ratings = (reviews ?? [])
     .map((r) => r.rating)
     .filter((r): r is number => r != null);
   const avgRating =
     ratings.length > 0
       ? ratings.reduce((a, b) => a + b, 0) / ratings.length
       : null;
-  const active = (row.loans ?? []).find((l) => l.returned_at === null) ?? null;
+  const active = (loans ?? []).find((l) => l.returned_at === null) ?? null;
   return {
-    ...row,
+    ...book,
     avgRating,
     ratingCount: ratings.length,
     activeLoan: active ? { borrower_name: active.borrower_name } : null,
+    myStatus: (reading_statuses?.[0]?.status as ReadingStatus) ?? "pendiente",
   };
 }
 
-/** Catálogo: libros de la biblioteca (owned) con promedio y préstamo activo. */
+/**
+ * Catálogo: libros de la biblioteca (owned) con promedio, préstamo activo y
+ * el estado de lectura del usuario actual (el embed viene filtrado a su fila).
+ */
 export async function getOwnedBooks(): Promise<BookWithMeta[]> {
   const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
   const { data } = await supabase
     .from("books")
-    .select("*, reviews(rating), loans(borrower_name, returned_at)")
+    .select(
+      "*, reviews(rating), loans(borrower_name, returned_at), reading_statuses(status)",
+    )
     .eq("status", "owned")
+    .eq("reading_statuses.user_id", user?.id ?? "")
     .order("created_at", { ascending: false });
   return (data ?? []).map(enrich);
 }
@@ -61,9 +80,9 @@ export type LibraryCounts = {
 export function computeCounts(books: BookWithMeta[]): LibraryCounts {
   return {
     total: books.length,
-    leidos: books.filter((b) => b.reading_status === "leido").length,
-    pendientes: books.filter((b) => b.reading_status === "pendiente").length,
-    leyendo: books.filter((b) => b.reading_status === "leyendo").length,
+    leidos: books.filter((b) => b.myStatus === "leido").length,
+    pendientes: books.filter((b) => b.myStatus === "pendiente").length,
+    leyendo: books.filter((b) => b.myStatus === "leyendo").length,
   };
 }
 
@@ -98,25 +117,41 @@ export type BookDetail = Book & {
   reviews: ReviewWithAuthor[];
   quotes: QuoteWithAuthor[];
   loans: LoanRecord[];
+  /** Estado de lectura DEL USUARIO ACTUAL (sin fila = pendiente). */
+  myStatus: ReadingStatus;
 };
 
-/** Ficha completa de un libro con reseñas, citas y préstamos. */
+/** Ficha completa de un libro con reseñas, citas, préstamos y MI estado. */
 export async function getBookDetail(id: string): Promise<BookDetail | null> {
   const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
   const { data } = await supabase
     .from("books")
     .select(
       `*,
        reviews(id, rating, review_text, created_at, updated_at, user_id, profiles(display_name, avatar_color)),
        quotes(id, quote_text, page_number, created_at, added_by, profiles(display_name, avatar_color)),
-       loans(id, borrower_name, loaned_at, returned_at, notes)`,
+       loans(id, borrower_name, loaned_at, returned_at, notes),
+       reading_statuses(status)`,
     )
     .eq("id", id)
+    .eq("reading_statuses.user_id", user?.id ?? "")
     .single();
 
   if (!data) return null;
 
-  const detail = data as unknown as BookDetail;
+  const raw = data as unknown as BookDetail & {
+    reading_statuses?: { status: string }[];
+  };
+  const detail: BookDetail = {
+    ...raw,
+    myStatus:
+      (raw.reading_statuses?.[0]?.status as ReadingStatus) ?? "pendiente",
+  };
+  delete (detail as Record<string, unknown>).reading_statuses;
   // Citas: por página (las que la tengan) y luego por fecha.
   detail.quotes = [...(detail.quotes ?? [])].sort((a, b) => {
     if (a.page_number != null && b.page_number != null)

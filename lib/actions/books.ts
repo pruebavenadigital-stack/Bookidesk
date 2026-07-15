@@ -45,27 +45,33 @@ export async function createBook(
   const { supabase, user } = await requireUser();
   if (!user) return { error: "Tu sesión expiró." };
 
-  const reading_status =
-    destination === "owned"
-      ? READING_STATUS_VALUES.includes(
-          (readingStatus ?? "pendiente") as (typeof READING_STATUS_VALUES)[number],
-        )
-        ? readingStatus
-        : "pendiente"
-      : null;
-
   const { data, error } = await supabase
     .from("books")
     .insert({
       ...parsed.data,
       status: destination,
-      reading_status,
       added_by: user.id,
     })
     .select("id")
     .single();
 
   if (error) return { error: "No se pudo guardar el libro." };
+
+  // El estado inicial elegido es la marca PERSONAL de quien lo agrega
+  // (sin fila = pendiente, así que solo se guarda si es otro estado).
+  if (
+    destination === "owned" &&
+    readingStatus &&
+    readingStatus !== "pendiente" &&
+    READING_STATUS_VALUES.includes(
+      readingStatus as (typeof READING_STATUS_VALUES)[number],
+    )
+  ) {
+    await supabase.from("reading_statuses").upsert(
+      { book_id: data.id, user_id: user.id, status: readingStatus },
+      { onConflict: "book_id,user_id" },
+    );
+  }
 
   revalidateBook(data.id);
   return { id: data.id };
@@ -108,11 +114,26 @@ export async function setReadingStatus(
   const { supabase, user } = await requireUser();
   if (!user) return { error: "Tu sesión expiró." };
 
-  const { error } = await supabase
+  // Solo los libros de la biblioteca tienen estado de lectura (no los deseados).
+  const { data: book } = await supabase
     .from("books")
-    .update({ reading_status: status })
+    .select("status")
     .eq("id", id)
-    .eq("status", "owned");
+    .maybeSingle();
+  if (!book || book.status !== "owned") {
+    return { error: "Este libro no está en la biblioteca." };
+  }
+
+  // La marca es PERSONAL: upsert de la fila del usuario actual (RLS lo garantiza).
+  const { error } = await supabase.from("reading_statuses").upsert(
+    {
+      book_id: id,
+      user_id: user.id,
+      status,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: "book_id,user_id" },
+  );
 
   if (error) return { error: "No se pudo cambiar el estado." };
 
@@ -124,9 +145,10 @@ export async function markPurchased(id: string): Promise<BookActionResult> {
   const { supabase, user } = await requireUser();
   if (!user) return { error: "Tu sesión expiró." };
 
+  // Pasa a la biblioteca; sin filas en reading_statuses = pendiente para todos.
   const { error } = await supabase
     .from("books")
-    .update({ status: "owned", reading_status: "pendiente" })
+    .update({ status: "owned" })
     .eq("id", id)
     .eq("status", "wishlist");
 

@@ -148,7 +148,7 @@ export function BookForm({
 
       {destination === "owned" ? (
         <div className="space-y-2">
-          <Label htmlFor="reading-status">Estado de lectura</Label>
+          <Label htmlFor="reading-status">Tu estado de lectura</Label>
           <Select value={readingStatus} onValueChange={(v) => setReadingStatus(v as ReadingStatus)}>
             <SelectTrigger id="reading-status" className="w-full sm:w-64">
               <SelectValue />

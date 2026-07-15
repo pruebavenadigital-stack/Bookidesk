@@ -43,7 +43,7 @@ export function ReadingStatusControl({
 
   return (
     <Select value={value} onValueChange={(v) => change(v as ReadingStatus)} disabled={pending}>
-      <SelectTrigger className="w-full sm:w-56" aria-label="Estado de lectura">
+      <SelectTrigger className="w-full sm:w-56" aria-label="Tu estado de lectura">
         <SelectValue />
       </SelectTrigger>
       <SelectContent>

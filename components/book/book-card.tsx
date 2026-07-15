@@ -3,7 +3,6 @@ import { BookCover } from "./book-cover";
 import { StarRatingDisplay } from "./star-rating-display";
 import { ReadingStatusBadge, LoanedBadge } from "./status-badge";
 import type { BookWithMeta } from "@/lib/books/queries";
-import type { ReadingStatus } from "@/lib/supabase/types";
 
 export function BookCard({ book }: { book: BookWithMeta }) {
   return (
@@ -31,11 +30,7 @@ export function BookCard({ book }: { book: BookWithMeta }) {
           </p>
         ) : null}
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1 pt-0.5">
-          {book.reading_status ? (
-            <ReadingStatusBadge
-              status={book.reading_status as ReadingStatus}
-            />
-          ) : null}
+          <ReadingStatusBadge status={book.myStatus} />
           {book.avgRating != null ? (
             <StarRatingDisplay
               rating={book.avgRating}
@@ -77,9 +72,7 @@ export function BookRow({ book }: { book: BookWithMeta }) {
       </div>
       <div className="flex shrink-0 items-center gap-2">
         {book.activeLoan ? <LoanedBadge /> : null}
-        {book.reading_status ? (
-          <ReadingStatusBadge status={book.reading_status as ReadingStatus} />
-        ) : null}
+        <ReadingStatusBadge status={book.myStatus} />
       </div>
     </Link>
   );
