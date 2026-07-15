@@ -15,12 +15,19 @@ function pick(title: string) {
   return GRADIENTS[Math.abs(h) % GRADIENTS.length];
 }
 
+/** Artículos y preposiciones que no aportan a las iniciales. */
+const STOP_WORDS = new Set([
+  "el", "la", "los", "las", "un", "una", "unos", "unas",
+  "de", "del", "y", "o", "en", "a", "al", "para", "por",
+  "the", "of", "and", "a", "an",
+]);
+
 function initials(title: string) {
   const words = title
     .replace(/[^\p{L}\p{N}\s]/gu, "")
     .split(/\s+/)
-    .filter((w) => w.length > 2 || /\d/.test(w));
-  const src = words.length ? words : title.trim().split(/\s+/);
+    .filter((w) => w && !STOP_WORDS.has(w.toLowerCase()));
+  const src = words.length ? words : title.trim().split(/\s+/).filter(Boolean);
   return (
     src
       .slice(0, 2)

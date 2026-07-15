@@ -2,6 +2,10 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { getBookDetail } from "@/lib/books/queries";
+import { createClient } from "@/lib/supabase/server";
+import { ReviewsSection } from "@/components/book/reviews-section";
+import { QuotesSection } from "@/components/book/quotes-section";
+import { Synopsis } from "@/components/book/synopsis";
 import { BookCover } from "@/components/book/book-cover";
 import { StarRatingDisplay } from "@/components/book/star-rating-display";
 import { ReadingStatusControl } from "@/components/book/reading-status-control";
@@ -18,6 +22,11 @@ export default async function BookDetailPage({
   const { id } = await params;
   const book = await getBookDetail(id);
   if (!book) notFound();
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   const ratings = book.reviews
     .map((r) => r.rating)
@@ -125,10 +134,20 @@ export default async function BookDetailPage({
       {book.synopsis ? (
         <section className="mt-8 max-w-2xl">
           <h2 className="mb-2 font-display text-lg font-semibold">Sinopsis</h2>
-          <p className="whitespace-pre-line text-sm leading-relaxed text-muted-foreground">
-            {book.synopsis}
-          </p>
+          <Synopsis text={book.synopsis} />
         </section>
+      ) : null}
+
+      {/* Reseñas y citas: solo para libros de la biblioteca (CA-6.5, CA-9.6) */}
+      {book.status === "owned" && user ? (
+        <>
+          <ReviewsSection
+            bookId={book.id}
+            reviews={book.reviews}
+            currentUserId={user.id}
+          />
+          <QuotesSection bookId={book.id} quotes={book.quotes} />
+        </>
       ) : null}
     </div>
   );

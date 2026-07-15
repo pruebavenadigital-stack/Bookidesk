@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { setReadingStatus } from "@/lib/actions/books";
 import { READING_STATUS_LABEL, type ReadingStatus } from "@/lib/supabase/types";
+import { RATE_NOW_EVENT } from "./reviews-section";
 import {
   Select,
   SelectContent,
@@ -32,6 +33,10 @@ export function ReadingStatusControl({
         toast.error(res.error);
       } else {
         toast.success("Estado actualizado.");
+        // Al marcar "Leído", invita a calificar (CA-4.4). Es omitible.
+        if (next === "leido" && prev !== "leido") {
+          window.dispatchEvent(new CustomEvent(RATE_NOW_EVENT));
+        }
       }
     });
   }
